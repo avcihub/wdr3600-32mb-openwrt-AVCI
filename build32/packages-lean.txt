@@ -1,0 +1,21 @@
+# Hafif paket listesi (do_build.py'nin son hali, 24 Ekim). /overlay ~26 MB.
+luci
+luci-ssl
+luci-theme-bootstrap
+kmod-sched-cake
+luci-app-sqm
+kmod-usb-storage
+kmod-fs-ntfs3
+kmod-fs-exfat
+wireguard-tools
+kmod-wireguard
+luci-proto-wireguard
+https-dns-proxy
+luci-app-https-dns-proxy
+zram-swap
+curl
+jq
+ca-certificates
+htop
+nano
+iperf3

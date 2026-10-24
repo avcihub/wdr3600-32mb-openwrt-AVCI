@@ -1,0 +1,11 @@
+# Derleme çıktıları ve geçici dosyalar
+out*/
+__pycache__/
+*.pyc
+*_log.txt
+*.log
+*.html
+# Cihaza özel veriler ve Breed ikilisi ASLA eklenmez
+*.bin
+# Genel Breed env bloğu (cihaza özel veri yok) hariç
+!build32/breed_env_autoboot.bin

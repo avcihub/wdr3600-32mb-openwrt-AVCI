@@ -1,0 +1,11 @@
+#!/bin/sh
+# Açılışta saat henüz 2024 iken https-dns-proxy TLS sağlık testinde düşer ve dnsmasq'ı
+# düz DNS'e bırakır. NTP ilk kez eşitlendiğinde DoH'u yeniden bağla.
+[ "$ACTION" = "stratum" ] || exit 0
+[ -f /tmp/.https-dns-proxy-ntp-done ] && exit 0
+/etc/init.d/https-dns-proxy enabled || exit 0
+touch /tmp/.https-dns-proxy-ntp-done
+uci -q get dhcp.@dnsmasq[0].server | grep -q '127.0.0.1#505' || {
+	logger -t https-dns-proxy "NTP eşitlendi, DoH yeniden başlatılıyor"
+	/etc/init.d/https-dns-proxy restart
+}

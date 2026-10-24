@@ -1,0 +1,52 @@
+# Tam paket listesi (24 Ekim): packages-lean.txt + ek uygulamalar. Tek tema: bootstrap (Argon yok).
+luci
+luci-ssl
+luci-theme-bootstrap
+kmod-sched-cake
+luci-app-sqm
+kmod-usb-storage
+kmod-fs-ntfs3
+kmod-fs-exfat
+wireguard-tools
+kmod-wireguard
+luci-proto-wireguard
+https-dns-proxy
+luci-app-https-dns-proxy
+zram-swap
+kmod-lib-lzo
+curl
+jq
+ca-certificates
+htop
+nano
+iperf3
+# ek uygulamalar
+zerotier
+luci-app-wol
+etherwake
+adblock-fast
+luci-app-adblock-fast
+watchcat
+luci-app-watchcat
+luci-app-upnp
+luci-app-ttyd
+luci-app-statistics
+collectd
+collectd-mod-cpu
+collectd-mod-interface
+collectd-mod-memory
+collectd-mod-load
+pbr
+luci-app-pbr
+luci-app-nft-qos
+luci-app-samba4
+samba4-server
+tailscale
+luci-app-commands
+# adblock-fast için önerilen (busybox yerine hızlı sürümler, ~650 KB)
+gawk
+grep
+sed
+coreutils-sort
+# eWeLink API imzası (HMAC-SHA256)
+openssl-util

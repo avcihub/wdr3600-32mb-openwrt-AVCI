@@ -1,0 +1,75 @@
+#!/bin/sh
+# WDR3600 32 MB genel imaj: ilk açılış ayarları. Şifre, kimlik ve kişisel bilgi içermez.
+# LAN IP OpenWrt varsayılanı: 192.168.1.1. root şifresi boş: LuCI ilk girişte şifre ister.
+
+uci -q set system.@system[0].hostname='Wdr3600-AVCI'
+uci -q set system.@system[0].zonename='Europe/Istanbul'
+uci -q set system.@system[0].timezone='<+03>-3'
+uci -q set luci.main.mediaurlbase='/luci-static/bootstrap'
+uci -q set firewall.@defaults[0].flow_offloading='1'
+
+# NTP: önce IP adresleri (saat yanlışken DoH/TLS çalışmaz, isimler çözülmez)
+uci -q delete system.ntp.server
+for s in 162.159.200.1 162.159.200.123 216.239.35.0 216.239.35.4 \
+	0.openwrt.pool.ntp.org 1.openwrt.pool.ntp.org time.cloudflare.com; do
+	uci -q add_list system.ntp.server="$s"
+done
+uci -q set system.ntp.enabled='1'
+
+# DNS yönlendirme yalnızca port 53 (DoT/853 engellenmesin)
+uci -q delete https-dns-proxy.config.force_dns_port
+uci -q add_list https-dns-proxy.config.force_dns_port='53'
+uci -q set adblock-fast.config.force_dns='1'
+uci -q delete adblock-fast.config.force_dns_port
+uci -q add_list adblock-fast.config.force_dns_port='53'
+
+# zram swap 64 MB
+uci -q set system.@system[0].zram_size_mb='64'
+/etc/init.d/zram enable 2>/dev/null || true
+
+# Wi-Fi: iki bantta tek ad "AVCI", her zaman açık, ŞİFRESİZ.
+# İlk açılışta hemen LuCI > Ağ > Kablosuz'dan şifre koyun.
+[ -f /etc/config/wireless ] || wifi config
+for r in 0 1; do
+	uci -q set wireless.radio$r.disabled='0'
+	uci -q set wireless.radio$r.country='TR'
+	uci -q set wireless.default_radio$r.ssid='AVCI'
+	uci -q set wireless.default_radio$r.encryption='none'
+	uci -q delete wireless.default_radio$r.key
+	uci -q set wireless.default_radio$r.disabled='0'
+done
+
+# ZeroTier kapalı gelir. Paketin örnek ayarı herkese açık "Earth" ağına
+# (8056c2e21c000001) katılır; yanlışlıkla açılırsa LAN'a yabancılar erişmesin diye siliniyor.
+# Kendi ağınızı LuCI/uci ile ekleyin ve zt+ arayüzünü bilinçli olarak bir bölgeye koyun.
+uci -q delete zerotier.mynet
+uci -q set zerotier.global.enabled='0'
+
+# Tailscale alt ağ yönlendirme için hazır (giriş yapılmaz):
+#   tailscale up --advertise-routes=192.168.1.0/24 --accept-dns=false
+if ! uci -q get network.tailscale >/dev/null; then
+	uci set network.tailscale=interface
+	uci set network.tailscale.proto='none'
+	uci set network.tailscale.device='tailscale0'
+fi
+if ! uci show firewall | grep -q "name='tailscale'"; then
+	z=$(uci add firewall zone)
+	uci set firewall.$z.name='tailscale'
+	uci set firewall.$z.input='ACCEPT'
+	uci set firewall.$z.output='ACCEPT'
+	uci set firewall.$z.forward='ACCEPT'
+	uci set firewall.$z.masq='1'
+	uci set firewall.$z.mtu_fix='1'
+	uci add_list firewall.$z.network='tailscale'
+	f=$(uci add firewall forwarding); uci set firewall.$f.src='tailscale'; uci set firewall.$f.dest='lan'
+	f=$(uci add firewall forwarding); uci set firewall.$f.src='lan'; uci set firewall.$f.dest='tailscale'
+fi
+# fw4 nftables kullanıyor; "auto" iptables-legacy'yi seçip nat hatası veriyor
+sed -i 's/TS_DEBUG_FIREWALL_MODE=auto/TS_DEBUG_FIREWALL_MODE=nftables/' /etc/init.d/tailscale 2>/dev/null
+/etc/init.d/tailscale enable 2>/dev/null || true
+
+uci commit
+
+grep -qxF /etc/init.d/tailscale /etc/sysupgrade.conf || echo /etc/init.d/tailscale >> /etc/sysupgrade.conf
+grep -qxF /etc/tailscale/ /etc/sysupgrade.conf || echo /etc/tailscale/ >> /etc/sysupgrade.conf
+exit 0

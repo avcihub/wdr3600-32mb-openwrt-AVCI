@@ -1,0 +1,58 @@
+#!/bin/sh
+# Eklentilerin güvenli varsayılanları (24.10.2026 routerda test edildi)
+
+# adblock-fast: küçük liste (OISD small, ~59 bin alan adı). jsDelivr Hagezi
+# listelerini 403 ile reddediyor; Hagezi Light ise 128 MB RAM için büyük.
+uci -q set adblock-fast.config.enabled='1'
+for s in $(uci show adblock-fast | sed -n "s/^adblock-fast\.\(@file_url\[[0-9]*\]\)=file_url$/\1/p"); do
+	uci -q set "adblock-fast.$s.enabled=0"
+done
+if ! uci show adblock-fast | grep -q "small.oisd.nl"; then
+	s=$(uci add adblock-fast file_url)
+	uci set "adblock-fast.$s.name=OISD - Small"
+	uci set "adblock-fast.$s.url=https://small.oisd.nl/domainswild2"
+	uci set "adblock-fast.$s.action=block"
+fi
+s=$(uci show adblock-fast | sed -n "s/^adblock-fast\.\(@file_url\[[0-9]*\]\)\.url='https:\/\/small\.oisd\.nl.*/\1/p" | head -n1)
+[ -n "$s" ] && uci set "adblock-fast.$s.enabled=1"
+/etc/init.d/adblock-fast enable 2>/dev/null || true
+
+# UPnP/NAT-PMP açık (secure_mode: yalnızca isteyen cihaza port açılır)
+uci -q set upnpd.config.enabled='1'
+/etc/init.d/miniupnpd enable 2>/dev/null || true
+
+# nft-qos varsayılanı 50 KB/s statik limit içeriyor ve flow offloading ile çakışır: kapalı
+uci -q set nft-qos.default.limit_enable='0'
+
+# SQM: WAN arayüzü eth0.2; hız bilinmediği için kapalı (LuCI > Ağ > SQM'den açın)
+uci -q set sqm.eth1.interface='eth0.2'
+uci -q set sqm.eth1.enabled='0'
+
+# Performans (24.10.2026 ölçüm: ~113/35 Mbps, yük altında gecikme artışı yok -> SQM gereksiz,
+# flow offloading açık kalır). 5 GHz HT40 (WDR3600 5 GHz'de 802.11n), 2.4 GHz HT20.
+uci -q set wireless.radio1.htmode='HT40'
+uci -q set wireless.radio0.htmode='HT20'
+# Güç: TR (ETSI) 2.4 GHz sınırı 20 dBm EIRP; ~3 dBi anten ile 17 dBm iletim.
+# 5 GHz: sınır 23 dBm, ama radyonun kalibrasyonu HT40'ta 15 dBm'e izin veriyor (otomatik en yüksek).
+uci -q set wireless.radio0.country='TR'
+uci -q set wireless.radio1.country='TR'
+uci -q set wireless.radio0.txpower='17'
+uci -q delete wireless.radio1.txpower
+
+# Tailscale istemcileri (100.64.0.0/10) router DNS'ini ve reklam engellemeyi kullanabilsin.
+# WAN girişini firewall zaten reddediyor.
+uci -q set dhcp.@dnsmasq[0].localservice='0'
+
+# pbr kural gerektirir; kapalıyken servis yine de nft zincirleri yüklüyordu -> servis kapalı
+uci -q set pbr.config.enabled='0'
+/etc/init.d/pbr disable 2>/dev/null || true
+
+# Samba: şablondaki eski "null passwords" (testparm: deprecated) kaldır
+sed -i '/null passwords/d' /etc/samba/smb.conf.template 2>/dev/null
+
+# Tailscale MagicDNS adları (*.ts.net -> 100.x) dnsmasq rebind korumasına takılmasın
+uci -q del_list dhcp.@dnsmasq[0].rebind_domain='ts.net'
+uci -q add_list dhcp.@dnsmasq[0].rebind_domain='ts.net'
+
+uci commit
+exit 0

@@ -1,0 +1,22 @@
+#!/bin/sh
+# Uzak erişim bekçisi ve sağlık kaydı için cron satırları
+chmod +x /usr/bin/uzak-bekci.sh /usr/bin/saglik-kaydi.sh /usr/bin/tg-bildir.sh /usr/bin/tg-gonder.sh /usr/bin/ewelink.sh /usr/bin/bekci-reboot.sh /usr/bin/watchcat-reboot.sh
+touch /etc/crontabs/root
+chmod 600 /etc/config/ewelink 2>/dev/null
+grep -q uzak-bekci /etc/crontabs/root || echo '*/5 * * * * /usr/bin/uzak-bekci.sh' >> /etc/crontabs/root
+grep -q 'saglik-kaydi.sh$' /etc/crontabs/root || echo '7 * * * * /usr/bin/saglik-kaydi.sh' >> /etc/crontabs/root
+grep -q 'saglik-kaydi.sh ozet' /etc/crontabs/root || echo '15 3 * * * /usr/bin/saglik-kaydi.sh ozet' >> /etc/crontabs/root
+for f in /etc/config/ewelink /usr/bin/uzak-bekci.sh /usr/bin/saglik-kaydi.sh /usr/bin/tg-bildir.sh /usr/bin/tg-gonder.sh /usr/bin/ewelink.sh /usr/bin/bekci-reboot.sh /usr/bin/watchcat-reboot.sh /etc/crontabs/root /etc/saglik-ozet.log /etc/hotplug.d/ntp/90-https-dns-proxy; do
+	grep -qxF "$f" /etc/sysupgrade.conf || echo "$f" >> /etc/sysupgrade.conf
+done
+# watchcat: internet 30 dk yoksa router reboot (uptime 30 dk olmadan reboot etmez).
+# run_script modu: reboot'tan önce nedeni kaydeder, açılışta Telegram'a bildirilir.
+uci -q set watchcat.@watchcat[0].mode='run_script'
+uci -q set watchcat.@watchcat[0].script='/usr/bin/watchcat-reboot.sh'
+uci -q set watchcat.@watchcat[0].period='30m'
+uci -q set watchcat.@watchcat[0].pinghosts='1.1.1.1 8.8.8.8 9.9.9.9'
+uci -q set watchcat.@watchcat[0].pingperiod='60s'
+uci -q set watchcat.@watchcat[0].forcedelay='30'
+uci commit watchcat
+/etc/init.d/cron enable
+exit 0

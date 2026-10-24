@@ -245,5 +245,5 @@ tn.close()
 httpd.shutdown()
 log("BASARILI: imaj yazıldı, OpenWrt açılıyor (ilk açılış ~2-3 dk).")
 if env_needs_bootfix:
-    log("SONRAKİ ADIM: Breed env ayarı eksik -> build32/breed_bootfix.bat çalıştırın.")
+    log("SONRAKİ ADIM: Breed env ayarı eksik -> scripts/breed/breed_bootfix.bat çalıştırın.")
     sys.exit(3)

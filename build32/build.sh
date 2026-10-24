@@ -32,7 +32,7 @@ f85bc4114937a90e027038c95cd573bd6841fc5e81d5db4fe211088eff12f482  mktplinkfw.c
 WORK="${WORK:-$HOME/build_wdr3600_32m}"
 FILES_DIR="${FILES_DIR:-$HERE/files_public}"
 OUT="${OUT:-$HERE/out}"
-PACKAGES_FILE="${PACKAGES_FILE:-$HERE/packages.txt}"
+PACKAGES_FILE="${PACKAGES_FILE:-$HERE/packages-full.txt}"
 
 # WSL, Windows PATH'ini (boşluklu) ekler; ImageBuilder bununla bozulur.
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -48,6 +48,7 @@ done
 [ ${#missing[@]} -eq 0 ] || die "eksik: ${missing[*]}
   sudo apt install build-essential libncurses-dev zlib1g-dev gawk git gettext libssl-dev xsltproc rsync wget unzip python3 file device-tree-compiler patch curl xz-utils"
 [ -d "$FILES_DIR" ] || die "FILES_DIR yok: $FILES_DIR"
+[ -f "$PACKAGES_FILE" ] || die "PACKAGES_FILE yok: $PACKAGES_FILE"
 mkdir -p "$WORK/dl" "$OUT"
 
 step "1/8 ImageBuilder indir ve sha256 doğrula"

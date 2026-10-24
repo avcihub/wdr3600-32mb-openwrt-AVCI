@@ -8,11 +8,13 @@ if %errorlevel% neq 0 (
 )
 title WDR3600 32MB temiz imaj - Breed flash
 set LOG=%~dp0breed_flash_log.txt
+:: Varsayilan Ethernet arayuz adi (Turkce Windows'ta farkliysa, orn. "Ethernet 2" degistirin)
+set ADAPTER=Ethernet
 echo ==== %date% %time% bat basladi >> "%LOG%"
 
 echo [1/4] Ethernet 192.168.1.2 yapiliyor (Wi-Fi internet kesilmez)...
-netsh interface ipv4 set address name="Ethernet" source=static address=192.168.1.2 mask=255.255.255.0 gateway=none >> "%LOG%" 2>&1
-netsh interface ipv4 set interface "Ethernet" metric=100 >> "%LOG%" 2>&1
+netsh interface ipv4 set address name="%ADAPTER%" source=static address=192.168.1.2 mask=255.255.255.0 gateway=none >> "%LOG%" 2>&1
+netsh interface ipv4 set interface "%ADAPTER%" metric=100 >> "%LOG%" 2>&1
 :: Breed'in imaji PC'den indirebilmesi icin gecici kural (yalnizca 192.168.1.1 -> TCP 8000)
 netsh advfirewall firewall add rule name="WDR3600 Breed HTTP gecici" dir=in action=allow protocol=TCP localport=8000 remoteip=192.168.1.1 >> "%LOG%" 2>&1
 timeout /t 5 /nobreak >nul
@@ -33,13 +35,13 @@ set RC=%errorlevel%
 
 echo [3/4] Gecici kural kaldiriliyor, Ethernet otomatik IP (DHCP) yapiliyor...
 netsh advfirewall firewall delete rule name="WDR3600 Breed HTTP gecici" >> "%LOG%" 2>&1
-netsh interface ipv4 set address name="Ethernet" source=dhcp >> "%LOG%" 2>&1
-netsh interface ipv4 set dnsservers name="Ethernet" source=dhcp >> "%LOG%" 2>&1
-netsh interface ipv4 set interface "Ethernet" metric=100 >> "%LOG%" 2>&1
+netsh interface ipv4 set address name="%ADAPTER%" source=dhcp >> "%LOG%" 2>&1
+netsh interface ipv4 set dnsservers name="%ADAPTER%" source=dhcp >> "%LOG%" 2>&1
+netsh interface ipv4 set interface "%ADAPTER%" metric=100 >> "%LOG%" 2>&1
 
 if "%RC%"=="3" (
     echo UYARI: imaj yazildi ama Breed autoboot.command ayari eksik.
-    echo Router acildiktan sonra build32\breed_bootfix.bat calistirin.
+    echo Router acildiktan sonra scripts\breed\breed_bootfix.bat calistirin.
     echo ==== Breed env eksik, breed_bootfix.bat gerekli >> "%LOG%"
     set RC=0
 )

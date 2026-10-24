@@ -81,27 +81,39 @@ tg   # bekleyen bildirimleri gönder
 # eWeLink anahtarını süresi dolmadan yenile (bağlıysa; 3 günden az kaldıysa)
 [ -n "$(uci -q get ewelink.main.access_token)" ] && /usr/bin/ewelink.sh refresh >/dev/null 2>&1
 
-# Tailscale
+# Tailscale (yapılandırılmışsa: durum dosyası varsa veya backend çalışıyorsa)
 ts_ok=0
+ts_configured=0
+[ -s /etc/tailscale/tailscaled.state ] && ts_configured=1
 if pidof tailscaled >/dev/null; then
-	tailscale status --json 2>/dev/null | jsonfilter -e '@.BackendState' 2>/dev/null | grep -q '^Running$' && ts_ok=1
+	ts_state=$(tailscale status --json 2>/dev/null | jsonfilter -e '@.BackendState' 2>/dev/null)
+	[ "$ts_state" = "Running" ] && { ts_ok=1; ts_configured=1; }
 fi
-if [ $ts_ok = 1 ]; then put ts 0; else
-	inc ts; [ $(( $(get ts) % 6 )) = 2 ] && { log "Tailscale çalışmıyor (10 dk): yeniden başlatılıyor"; /etc/init.d/tailscale restart; tg "🔁 Tailscale çalışmıyordu, yeniden başlatıldı"; }
+if [ $ts_configured = 1 ]; then
+	if [ $ts_ok = 1 ]; then put ts 0; else
+		inc ts; [ $(( $(get ts) % 6 )) = 2 ] && { log "Tailscale çalışmıyor (10 dk): yeniden başlatılıyor"; /etc/init.d/tailscale restart; tg "🔁 Tailscale çalışmıyordu, yeniden başlatıldı"; }
+	fi
 fi
 
 # ZeroTier (yapılandırılmışsa)
-zt_ok=1
+zt_ok=0
+zt_configured=0
 if [ "$(uci -q get zerotier.global.enabled)" = 1 ]; then
-	zerotier-cli info 2>/dev/null | grep -q ONLINE || zt_ok=0
+	zt_configured=1
+	zerotier-cli info 2>/dev/null | grep -q ONLINE && zt_ok=1
 	if [ $zt_ok = 1 ]; then put zt 0; else
 		inc zt; [ $(( $(get zt) % 6 )) = 2 ] && { log "ZeroTier çalışmıyor (10 dk): yeniden başlatılıyor"; /etc/init.d/zerotier restart; tg "🔁 ZeroTier çalışmıyordu, yeniden başlatıldı"; }
 	fi
 fi
 
-# İkisi de yoksa (internet varken) 30 dk sonra reboot
-if [ $ts_ok = 0 ] && [ $zt_ok = 0 ]; then
-	inc both; [ "$(get both)" -ge 6 ] && safe_reboot "Tailscale ve ZeroTier 30 dk ulaşılamaz"
+# Yapılandırılmış tünellerden hiçbiri çalışmıyorsa (internet varken) 30 dk sonra reboot
+tunnel_configured=0
+tunnel_working=0
+[ $ts_configured = 1 ] && { tunnel_configured=1; [ $ts_ok = 1 ] && tunnel_working=1; }
+[ $zt_configured = 1 ] && { tunnel_configured=1; [ $zt_ok = 1 ] && tunnel_working=1; }
+
+if [ $tunnel_configured = 1 ] && [ $tunnel_working = 0 ]; then
+	inc both; [ "$(get both)" -ge 6 ] && safe_reboot "Uzak erişim tünelleri (TS/ZT) 30 dk ulaşılamaz"
 else
 	put both 0
 	# En az bir uzak erişim yolu çalışıyor: reboot geri sayımını sıfırla

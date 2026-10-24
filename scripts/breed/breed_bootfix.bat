@@ -8,11 +8,13 @@ if %errorlevel% neq 0 (
 )
 title WDR3600 Breed acilis duzeltmesi (yazma yok)
 set LOG=%~dp0breed_bootfix_log.txt
+:: Varsayilan Ethernet arayuz adi (Turkce Windows'ta farkliysa, orn. "Ethernet 2" degistirin)
+set ADAPTER=Ethernet
 echo ==== %date% %time% bat basladi >> "%LOG%"
 
 echo [1/4] Ethernet 192.168.1.2 yapiliyor (Wi-Fi internet kesilmez)...
-netsh interface ipv4 set address name="Ethernet" source=static address=192.168.1.2 mask=255.255.255.0 gateway=none >> "%LOG%" 2>&1
-netsh interface ipv4 set interface "Ethernet" metric=100 >> "%LOG%" 2>&1
+netsh interface ipv4 set address name="%ADAPTER%" source=static address=192.168.1.2 mask=255.255.255.0 gateway=none >> "%LOG%" 2>&1
+netsh interface ipv4 set interface "%ADAPTER%" metric=100 >> "%LOG%" 2>&1
 :: Breed'in imaji PC'den indirebilmesi icin gecici kural (yalnizca 192.168.1.1 -> TCP 8000)
 timeout /t 5 /nobreak >nul
 
@@ -31,9 +33,9 @@ python -I "%~dp0breed_bootfix.py"
 set RC=%errorlevel%
 
 echo [3/4] Gecici kural kaldiriliyor, Ethernet otomatik IP (DHCP) yapiliyor...
-netsh interface ipv4 set address name="Ethernet" source=dhcp >> "%LOG%" 2>&1
-netsh interface ipv4 set dnsservers name="Ethernet" source=dhcp >> "%LOG%" 2>&1
-netsh interface ipv4 set interface "Ethernet" metric=100 >> "%LOG%" 2>&1
+netsh interface ipv4 set address name="%ADAPTER%" source=dhcp >> "%LOG%" 2>&1
+netsh interface ipv4 set dnsservers name="%ADAPTER%" source=dhcp >> "%LOG%" 2>&1
+netsh interface ipv4 set interface "%ADAPTER%" metric=100 >> "%LOG%" 2>&1
 
 if not "%RC%"=="0" (
     echo HATA olustu, ayrintilar: %LOG%

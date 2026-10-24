@@ -108,7 +108,7 @@ bootstrap (klasik). 2.4 GHz HT20 17 dBm, 5 GHz HT40 (kanal 36+40), ülke TR. IPv
 **A) Breed web arayüzü (en kolay):** WPS/Reset basılıyken güç ver → `http://192.168.1.1` →
 Firmware update → `...-factory.bin`.
 
-**B) Breed telnet betiği (Windows):** `scripts/breed/breed_flash_clean.bat` (yönetici). İmajı ve cihazın
+**B) Breed telnet betiği (Windows):** `scripts/breed/breed_flash_clean.bat` (yönetici; ağ kartı adı varsayılan `Ethernet`tir, farklıysa `.bat` içindeki `ADAPTER` değişkenini düzenleyin). İmajı ve cihazın
 kendi `art.bin`'ini aynı klasöre koyun. Firmware bölümünü siler, yazar, geri okuyarak doğrular; ART yalnızca
 farklıysa yazılır; Breed env'de `autoboot.command` yoksa ekler (env kapalıysa `breed_bootfix.bat`).
 
@@ -119,6 +119,8 @@ Breed + env + MAC + OpenWrt + ART, aradaki her şey 0xFF (ilk açılışta `/ove
 python3 build32/make_fullflash.py --breed breed-ar9344-ar8327n.bin --mac aa:bb:cc:dd:ee:ff \
     --art kendi_art_yedeginiz.bin --firmware wdr3600-32mb-openwrt-AVCI-v1.0-sysupgrade.bin -o fullflash.bin
 ```
+
+> 💡 *Windows'ta yerel çalıştırırken `fdtget` hatası alırsanız komuta `--no-verify` parametresini ekleyin veya WSL kullanın.*
 
 * **Breed bu depoda yok** (lisansı belirsiz). Kaynak: https://breed.hackpascal.net/ →
   `breed-ar9344-ar8327n.bin` (r1337, 2021-12-15), sha256

@@ -1,6 +1,6 @@
 # wdr3600-32mb-openwrt-AVCI v1.0
 
-**TP-Link TL-WDR3600 v1 — 32 MB flash modu, OpenWrt 23.05.5 + Breed**
+**TP-Link TL-WDR3600 v1.4 — 32 MB flash modu, OpenWrt 23.05.5 + Breed**
 
 Flash çipi 8 MB'tan **32 MB'a** (Macronix MX25L25645G) yükseltilmiş TL-WDR3600 v1 için
 tekrarlanabilir OpenWrt derlemesi, flaşlama araçları ve uzakta (fiziksel erişim olmadan) çalışmak

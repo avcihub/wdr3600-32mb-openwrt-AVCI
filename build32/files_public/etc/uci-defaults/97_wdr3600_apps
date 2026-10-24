@@ -32,12 +32,12 @@ uci -q set sqm.eth1.enabled='0'
 # flow offloading açık kalır). 5 GHz HT40 (WDR3600 5 GHz'de 802.11n), 2.4 GHz HT20.
 uci -q set wireless.radio1.htmode='HT40'
 uci -q set wireless.radio0.htmode='HT20'
-# Güç: TR (ETSI) 2.4 GHz sınırı 20 dBm EIRP; ~3 dBi anten ile 17 dBm iletim.
-# 5 GHz: sınır 23 dBm, ama radyonun kalibrasyonu HT40'ta 15 dBm'e izin veriyor (otomatik en yüksek).
+# Güç (ülke TR kalır): istenen 2.4 GHz 18 dBm, 5 GHz 16 dBm. Sürücü/kalibrasyon gerçek çıkışı
+# zinciri başına 17 / 15 dBm'de tutuyor (ayar yokken de aynı); 2 TX zinciri ile toplam ~+3 dB.
 uci -q set wireless.radio0.country='TR'
 uci -q set wireless.radio1.country='TR'
-uci -q set wireless.radio0.txpower='17'
-uci -q delete wireless.radio1.txpower
+uci -q set wireless.radio0.txpower='18'
+uci -q set wireless.radio1.txpower='16'
 
 # Tailscale istemcileri (100.64.0.0/10) router DNS'ini ve reklam engellemeyi kullanabilsin.
 # WAN girişini firewall zaten reddediyor.
